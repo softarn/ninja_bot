@@ -20,7 +20,9 @@ start(Host, Port, Name, Passwd) ->
 
 do_move(Sock, Name, Passwd, Who, Game, Cookie) ->
     reversi:draw_board(Game),
-    {X, Y, _, _} = ninja_move:max(Game, Who, 3),
+    {Time, {X,Y,_,_}} = timer:tc(ninja_move, max, [Game,Who,6]), 
+    io:format("Time ~w~n", [Time]),
+    %{X, Y, _, _} = ninja_move:max(Game, Who, 8),
     Ready = mk_move(Cookie, Who, X, Y),
     Reply = send_cmd(Sock, Ready),
     io:format("~s~n", [binary_to_list(Reply)]),

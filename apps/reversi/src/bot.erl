@@ -34,7 +34,8 @@ start_link(Server) ->
 
 init(Server) ->
     LSock = connect(Server),
-    reg(LSock),
+    Re = reg(LSock),
+    io:format("reg: ~w", [Re]),
     login(LSock),
     Game = new_game(LSock),
     play(#state{lsock = LSock, game = Game}).
@@ -53,12 +54,11 @@ connect(Server) ->
     {ok, LSock} = gen_tcp:connect(Server, ?PORT, []),
     LSock.
 
-
 reg(LSock) ->
-    Name = "foo",
-    Player = "foo",
+    Name = "ninja1",
+    Player = "foo1",
     Descr = "bar",
-    Email = "foo@bar.baz",
+    Email = "foo@bar.se",
     do_rpc(LSock, {register, Name, Player, Descr, Email}).
 
 login(LSock) ->

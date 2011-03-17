@@ -1,9 +1,12 @@
 -module(rand_bot2).
 
 -export([
-         start/4
+         start/4,
+	 start/0
         ]).
 
+start() ->
+    start(kpc2011.klarna.com,7676,"Ninja3","rv+gZqXT5L").
 start(Host, Port, Name, Passwd) ->
     case gen_tcp:connect(Host, Port, [binary,{packet, 0}]) of
 	{ok, Sock} ->

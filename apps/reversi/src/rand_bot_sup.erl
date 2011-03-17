@@ -16,7 +16,7 @@
 init({Host, Port}) ->
     {ok,
      {
-       {simple_for_one, 2, 2000},
+       {simple_one_for_one, 2, 2000},
        [
         rand_bot_child_spec(Host, Port)
        ]

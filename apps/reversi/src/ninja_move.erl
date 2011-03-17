@@ -15,31 +15,32 @@ loop_max_moves(Game, [{X,Y,_}|Moves], Who, Depth, BestMove) ->
     {ok, NewGame} = reversi:move(Game, X,Y,Who),
     {_,_,_,Bestval} = BestMove,
     
-    ReValue = get_min_response(NewGame, {X, Y, Who}, Depth-1),
+    ReValue = get_min_response(NewGame, {X, Y, Who}, BestMove, Depth-1),
 
     case ReValue > Bestval of
 	true -> loop_max_moves(Game, Moves, Who, Depth,{X,Y,Who,ReValue});
         false -> loop_max_moves(Game, Moves, Who, Depth, BestMove)
     end.
 
-get_min_response(Game, Move, 0) -> evaluate_board(Game, Move);
-get_min_response(Game, {_X, _Y, Who}, Depth) -> min(Game, swap(Who), Depth).
+get_min_response(Game, Move, _, 0) -> evaluate_board(Game, Move);
+get_min_response(Game, {_X, _Y, Who}, Alpha, Depth) -> min(Game, swap(Who), Depth, Alpha).
 
 %Min functions
-min(Game, Who, Depth) ->
+min(Game, Who, Depth, Alpha) ->
     Avail = reversi:check_avail(Game, Who),
-    loop_min_moves(Game, Avail, Who, Depth, {void,void,void,1338}).
+    loop_min_moves(Game, Avail, Who, Depth, Alpha, {void,void,void,1338}).
 
-loop_min_moves(_,[],_,_,BestMove) -> BestMove;
-loop_min_moves(Game, [{X,Y,_}|Moves], Who, Depth, BestMove) ->
+loop_min_moves(_,[],_,_,_,BestMove) -> BestMove;
+loop_min_moves(_,_,_,_,Alpha,BestMove) when BestMove < Alpha -> BestMove;
+loop_min_moves(Game, [{X,Y,_}|Moves], Who, Depth, Alpha, BestMove) ->
     {ok, NewGame} = reversi:move(Game, X,Y,Who),
     {_,_,_,Bestval} = BestMove,
 
     ReValue = get_max_response(NewGame, {X,Y,Who}, Depth-1),
 
     case ReValue < Bestval of
-	true -> loop_min_moves(Game, Moves, Who, Depth, {X,Y,Who,ReValue});
-	false -> loop_min_moves(Game, Moves, Who, Depth, BestMove)
+	true -> loop_min_moves(Game, Moves, Who, Depth, Alpha, {X,Y,Who,ReValue});
+	false -> loop_min_moves(Game, Moves, Who, Depth, Alpha, BestMove)
     end.
 
 get_max_response(Game, {X, Y, Who}, 0) -> evaluate_board(Game, {X, Y, swap(Who)});

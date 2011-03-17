@@ -5,25 +5,29 @@
 
 -include("../include/reversi.hrl").
 
-%Max functions
-max(Game, Who, Depth) ->
-    Avail = reversi:check_avail(Game, Who),
-    loop_max_moves(Game, Avail, Who, Depth, {void,void,void,-1338}).
+minmax(Game, Who, Depth) ->
+    max(Game, Who, Depth, 1338).
 
-loop_max_moves(_,[],_,_,BestMove) -> BestMove;
-loop_max_moves(Game, [{X,Y,_}|Moves], Who, Depth, BestMove) ->
+%Max functions
+max(Game, Who, Depth, Beta) ->
+    Avail = reversi:check_avail(Game, Who),
+    loop_max_moves(Game, Avail, Who, Depth, Beta, {void,void,void,-1338}).
+
+loop_max_moves(_,[],_,_,_,BestMove) -> BestMove;
+loop_max_moves(_,_,_,_,Beta,{X,Y,W,Bestval}) when Bestval > Beta -> {X,Y,W,Bestval};
+loop_max_moves(Game, [{X,Y,_}|Moves], Who, Depth, Beta, BestMove) ->
     {ok, NewGame} = reversi:move(Game, X,Y,Who),
     {_,_,_,Bestval} = BestMove,
     
-    ReValue = get_min_response(NewGame, {X, Y, Who}, BestMove, Depth-1),
+    ReValue = get_min_response(NewGame, {X, Y, Who}, Depth-1, BestMove),
 
     case ReValue > Bestval of
-	true -> loop_max_moves(Game, Moves, Who, Depth,{X,Y,Who,ReValue});
-        false -> loop_max_moves(Game, Moves, Who, Depth, BestMove)
+	true -> loop_max_moves(Game, Moves, Who, Depth, Beta, {X,Y,Who,ReValue});
+        false -> loop_max_moves(Game, Moves, Who, Depth, Beta, BestMove)
     end.
 
 get_min_response(Game, Move, _, 0) -> evaluate_board(Game, Move);
-get_min_response(Game, {_X, _Y, Who}, Alpha, Depth) -> min(Game, swap(Who), Depth, Alpha).
+get_min_response(Game, {_X, _Y, Who}, Depth, Alpha) -> min(Game, swap(Who), Depth, Alpha).
 
 %Min functions
 min(Game, Who, Depth, Alpha) ->
@@ -31,20 +35,20 @@ min(Game, Who, Depth, Alpha) ->
     loop_min_moves(Game, Avail, Who, Depth, Alpha, {void,void,void,1338}).
 
 loop_min_moves(_,[],_,_,_,BestMove) -> BestMove;
-loop_min_moves(_,_,_,_,Alpha,BestMove) when BestMove < Alpha -> BestMove;
+loop_min_moves(_,_,_,_,Alpha,{X,Y,W,Bestval}) when Bestval < Alpha -> {X,Y,W,Bestval};
 loop_min_moves(Game, [{X,Y,_}|Moves], Who, Depth, Alpha, BestMove) ->
     {ok, NewGame} = reversi:move(Game, X,Y,Who),
     {_,_,_,Bestval} = BestMove,
 
-    ReValue = get_max_response(NewGame, {X,Y,Who}, Depth-1),
+    ReValue = get_max_response(NewGame, {X,Y,Who}, Depth-1, BestMove),
 
     case ReValue < Bestval of
 	true -> loop_min_moves(Game, Moves, Who, Depth, Alpha, {X,Y,Who,ReValue});
 	false -> loop_min_moves(Game, Moves, Who, Depth, Alpha, BestMove)
     end.
 
-get_max_response(Game, {X, Y, Who}, 0) -> evaluate_board(Game, {X, Y, swap(Who)});
-get_max_response(Game, {_X, _Y, Who}, Depth) -> max(Game, swap(Who), Depth).
+get_max_response(Game, {X, Y, Who}, _, 0) -> evaluate_board(Game, {X, Y, swap(Who)});
+get_max_response(Game, {_X, _Y, Who}, Depth, Beta) -> max(Game, swap(Who), Depth, Beta).
 
 
 %Evaluations functions

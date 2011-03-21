@@ -23,14 +23,16 @@ avail_search(Player, Other) ->
     io:format("Empty:~w~n", [Empty]),
     NewPla = Player bsr 8,
     Potential = (NewPla band Other),
-    avail_search(NewPla, Other, Potential, 0, Empty).
+    io:format("Pot:~w~n", [Potential]),
+    avail_search(Other, Potential, 0, Empty).
 
-avail_search(0, _, _, Possible, _) -> Possible;
-avail_search(Player, Other, Potential, Possible, Empty) ->
-    NewPla = Player bsr 8,
-    NewPot = Potential bor (NewPla band Other),
-    NewPos = Possible bor (Potential band Empty),
-    avail_search(NewPla, Other, NewPot, NewPos, Empty).
+avail_search(_, 0, Possible, _) -> Possible;
+avail_search(Other, Potential, Possible, Empty) ->
+    io:format("Pot:~w~n", [Potential]),
+    NewPot = (Potential bsr 8) band Other,
+    NewPos = Possible bor ((Potential bsr 8) band Empty),
+    io:format("Pos:~w~n", [Possible]),
+    avail_search(Other, NewPot, NewPos, Empty).
 
 %From klarnas reversi.erl
 count_ones(I) ->

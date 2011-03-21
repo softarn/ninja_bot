@@ -5,9 +5,11 @@
 	 start/0
         ]).
 
+-include("../include/reversi.hrl").
+
 start() ->
     %start(kpc2011.klarna.com,7676,"Ninja1","fsMyc6jEV1").
-    start(localhost,7676,"Ninja1","MzyRmVjzoN").
+    start(localhost,7676,"Ninja1","15fbRmGCIQ").
 
 start(Host, Port, Name, Passwd) ->
     case gen_tcp:connect(Host, Port, [binary,{packet, 0}]) of
@@ -20,24 +22,25 @@ start(Host, Port, Name, Passwd) ->
 
 do_move(Sock, Name, Passwd, Who, Game, Cookie) ->
     reversi:draw_board(Game),
-    Avail = reversi:check_avail(Game, Who),
-    io:format("Available: ~w", [Avail]),
     {Time, {X,Y,_,_}} = timer:tc(ninja_move, minmax, [Game,Who,3]), 
     io:format("Time ~w~n", [Time]),
     Ready = mk_move(Cookie, Who, X, Y),
     Reply = send_cmd(Sock, Ready),
-    io:format("~s~n", [binary_to_list(Reply)]),
+    %io:format("~s~n", [binary_to_list(Reply)]),
     case parse_data(Reply) of
         {ok, {your_move, NewGame}} ->
             do_move(Sock, Name, Passwd, Who, NewGame, Cookie);
         {ok, {please_wait, NewGame}} ->
             do_wait(Sock, Name, Passwd, Who, NewGame, Cookie);
-        {ok, {game_over, _NewGame, Win}} ->
+        {ok, {game_over, #game{player_b = Black, player_w = White}, Win}} ->
 	    {ok, WriteDescr} = file:open("/home/softarn/stats.txt", [raw, append]),
-	    file:write(WriteDescr," won:"),
-	    V = integer_to_list(Win),
-	    file:write(WriteDescr,V),
-	    file:write(WriteDescr,"\n\n"),
+	    case Win of 
+		0 -> file:write(WriteDescr,multi_concat([Black, "* ", White]));
+		1 -> file:write(WriteDescr,multi_concat([Black, " ", White, "*"]));
+		-1 -> file:write(WriteDescr,multi_concat([Black, " ", White]))
+
+	    end,
+	    file:write(WriteDescr,"\n"),
 	    file:close(WriteDescr),
             ready(Sock, Name, Passwd);
         Error -> io:format("do_move ~p~n-~n~p~n", [Error, Reply])
@@ -68,7 +71,7 @@ ready(Sock, Name, Passwd) ->
 
 wait_for_chal(Sock, Name, Passwd) ->
     {value, {_,_,Reply}} = wait_long_reply(Sock),
-    io:format("~s~n", [binary_to_list(Reply)]),
+    %io:format("~s~n", [binary_to_list(Reply)]),
     case parse_data(Reply) of
         {ok, {lets_play, Who, Game, Cookie}} ->
             start_game(Sock, Name, Passwd, Who, Game, Cookie);
@@ -76,12 +79,6 @@ wait_for_chal(Sock, Name, Passwd) ->
     end.
 
 start_game(Sock, Name, Passwd, Who, Game, Cookie) ->
-    {ok, WriteDescr} = file:open("/home/softarn/stats.txt", [raw, append]),
-    file:write(WriteDescr,"I am:"),
-    V = integer_to_list(Who),
-    file:write(WriteDescr,V),
-    file:write(WriteDescr,"\n"),
-    file:close(WriteDescr),
     Ready = mk_start(Cookie, Who),
     Reply = send_cmd(Sock, Ready),
     case parse_data(Reply) of
@@ -101,12 +98,14 @@ do_wait(Sock, Name, Passwd, Who, _Game, Cookie) ->
             do_move(Sock, Name, Passwd, Who, NewGame, Cookie);
         {ok, {please_wait, NewGame}} ->
             do_wait(Sock, Name, Passwd, Who, NewGame, Cookie);
-        {ok, {game_over, _NewGame, Win}} ->
+        {ok, {game_over, #game{player_b = Black, player_w = White}, Win}} ->
 	    {ok, WriteDescr} = file:open("/home/softarn/stats.txt", [raw, append]),
-	    file:write(WriteDescr," won:"),
-	    V = integer_to_list(Win),
-	    file:write(WriteDescr,V),
-	    file:write(WriteDescr,"\n\n"),
+	    case Win of 
+		0 -> file:write(WriteDescr,multi_concat([Black, "* ", White]));
+		1 -> file:write(WriteDescr,multi_concat([Black, " ", White, "*"]));
+		-1 -> file:write(WriteDescr,multi_concat([Black, " ", White]))
+	    end,
+	    file:write(WriteDescr,"\n"),
 	    file:close(WriteDescr),
             ready(Sock, Name, Passwd);
         Error -> io:format("do_wait ~p~n-~n~p~n", [Error, Reply])
@@ -153,7 +152,9 @@ mk_start(Cookie, Who) ->
 mk_move(Cookie, Who, X, Y) ->
     io_lib:format("{move,~p,~p,~p,~p}.", [Cookie, Who, X, Y]).
 
-
+multi_concat([Head]) -> Head;
+multi_concat([Head|Tail]) ->
+    string:concat(Head, multi_concat(Tail)).
 
 parse_data("\n") ->
     [];

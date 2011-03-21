@@ -6,7 +6,7 @@
         ]).
 
 start() ->
-    start(localhost,7676,"Rand","GPuImGI8xI").
+    start(localhost,7676,"Rand","syTjlwEGA6").
 start(Host, Port, Name, Passwd) ->
     case gen_tcp:connect(Host, Port, [binary,{packet, 0}]) of
 	{ok, Sock} ->

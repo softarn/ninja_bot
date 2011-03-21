@@ -7,16 +7,10 @@
 
 minmax(Game, Who, Depth) ->
     max(Game, Who, Depth, 1338).
-    %Special case when there is only one move available
-    %Avail = reversi:check_avail(Game, Who),
-    %case length(Avail) of
-%	1 -> [{X,Y,_}] = Avail,
-%	    {X,Y,void,void};
-%	_ -> max(Game, Who, Depth, 1338)
-%    end.
 
 %Max functions
 max(Game, Who, Depth, Beta) ->
+    %Special case when there is only one move available
     Avail = reversi:check_avail(Game, Who),
     case length(Avail) of
 	0 -> {void,void,void,get_win_val(Game,Who)};
@@ -31,7 +25,7 @@ loop_max_moves(Game, [{X,Y,_}|Moves], Who, Depth, Beta, BestMove) ->
 
     {_,_,_,ReValue} = get_min_response(NewGame, {X, Y, Who}, Depth-1, Bestval),
 
-    io:format("MAX - ReVal: ~w BestVal: ~w~n", [ReValue, Bestval]),
+    %io:format("MAX - ReVal: ~w BestVal: ~w~n", [ReValue, Bestval]),
     case ReValue > Bestval of
 	true -> loop_max_moves(Game, Moves, Who, Depth, Beta, {X,Y,Who,ReValue});
         false -> loop_max_moves(Game, Moves, Who, Depth, Beta, BestMove)
@@ -56,7 +50,7 @@ loop_min_moves(Game, [{X,Y,_}|Moves], Who, Depth, Alpha, BestMove) ->
 
     {_,_,_,ReValue} = get_max_response(NewGame, {X,Y,Who}, Depth-1, Bestval),
 
-    io:format("MIN - ReVal: ~w BestVal: ~w~n", [ReValue, Bestval]),
+    %io:format("MIN - ReVal: ~w BestVal: ~w~n", [ReValue, Bestval]),
     case ReValue < Bestval of
 	true -> loop_min_moves(Game, Moves, Who, Depth, Alpha, {X,Y,Who,ReValue});
 	false -> loop_min_moves(Game, Moves, Who, Depth, Alpha, BestMove)
@@ -68,13 +62,14 @@ get_max_response(Game, {_X, _Y, Who}, Depth, Beta) ->
     max(Game, swap(Who), Depth, Beta).
 
 %Evaluations functions
-evaluate_board(Game, {_X, _Y, Who} ) ->
+evaluate_board(Game, {X, Y, Who} ) ->
     Avail = reversi:check_avail(Game, Who),
     case length(Avail) of
 	0 -> 
 	    get_win_val(Game, Who);
 	_ ->
-	    get_board_score(Game, Who)
+	    get_board_score(Game, Who) +
+	    get_avail_val(Game, Who)
     end.
 
 get_win_val(Game, Who) ->
@@ -83,6 +78,9 @@ get_win_val(Game, Who) ->
 	-1 -> 0;
 	_ -> -1337
     end.
+
+get_avail_val(Game, Who) -> 
+    length(reversi:check_avail(Game, Who)) - length(reversi:check_avail(Game, swap(Who))).
 
 winner(Game) ->
     case reversi:winner(Game) of
@@ -94,21 +92,7 @@ winner(Game) ->
 get_board_score(#game{points = {_,Points}}, 1) -> Points;
 get_board_score(#game{points = {Points, _}}, 0) -> Points.
 
-
-%Not used yet!
-evaluate_moves([Head]) ->
-    Value = get_position_rating(Head),
-    erlang:append_element(Head, Value);
-evaluate_moves([Head|Moves]) ->
-    Value = get_position_rating(Head),
-    NextMove = evaluate_moves(Moves),
-    {_,_,_,NextValue} = NextMove,
-    case Value < NextValue of
-	true -> NextMove;
-	false -> erlang:append_element(Head, Value)
-    end.
-
-get_position_rating({X,Y,_}) ->
+get_position_rating({X,Y}) ->
     {Cx, Cy} = convert_position({X,Y}),
     case Cx of
 	0 -> case Cy of
@@ -148,3 +132,18 @@ convert_position({X,Y}) ->
 
 swap(0) -> 1;
 swap(1) -> 0.
+
+%Not used yet!
+evaluate_moves([Head]) ->
+    Value = get_position_rating(Head),
+    erlang:append_element(Head, Value);
+evaluate_moves([Head|Moves]) ->
+    Value = get_position_rating(Head),
+    NextMove = evaluate_moves(Moves),
+    {_,_,_,NextValue} = NextMove,
+    case Value < NextValue of
+	true -> NextMove;
+	false -> erlang:append_element(Head, Value)
+    end.
+
+

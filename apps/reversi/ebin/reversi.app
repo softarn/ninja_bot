@@ -15,6 +15,7 @@
     bot_base,
     rand_bot2,
     rand_bot3,
+    board,
     ninja_bot,
     ninja_move,
     rand_bot_sup,

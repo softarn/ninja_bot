@@ -11,12 +11,25 @@ game_state(#game{board = {Black, White}}) ->
 	_ -> end_game
     end.
 
+check_avail(Game, Who) ->
+    move_parse(avail_moves(Game,Who)).
+
 avail_moves(#game{board = {Black, White}}, Who) ->
     case Who of
 	0 -> avail_init(Black, White);
 	1 -> avail_init(White, Black)
     end.
 
+%Parses move integer to list of {X,Y,ok}
+move_parse(Moves) ->
+    move_parse(Moves, 0, []).
+
+move_parse(0,_,List) -> List;
+move_parse(Moves, Count, List) ->
+    case 1 band Moves of
+	1 -> move_parse(Moves bsr 1, Count+1, [{Count rem 8, Count div 8, ok}|List]);
+	0 -> move_parse(Moves bsr 1, Count+1, List)
+    end.
 
 
 avail_init(Player, Other) ->
@@ -37,24 +50,13 @@ avail_init(Player, Other) ->
 avail_start(Player, Other, Empty, Bitfun) ->
     NewPla = Bitfun(Player),
     Potential = (NewPla band Other),
-    io:format("Pot:~w~n", [Potential]),
     avail_search(Other, Potential, 0, Empty, Bitfun).
 
 avail_search(_, 0, Possible, _, _) -> Possible;
 avail_search(Other, Potential, Possible, Empty, Bitfun) ->
-    io:format("Pot:~w~n", [Potential]),
     NewPot = Bitfun(Potential) band Other,
     NewPos = Possible bor (Bitfun(Potential) band Empty),
-    io:format("Pos:~w~n", [Possible]),
     avail_search(Other, NewPot, NewPos, Empty, Bitfun).
-
-avail_search_s(_, 0, Possible, _) -> Possible;
-avail_search_s( Other, Potential, Possible, Empty) ->
-    io:format("Pot:~w~n", [Potential]),
-    NewPot = (Potential bsl 8) band Other,
-    NewPos = Possible bor ((Potential bsl 8) band Empty),
-    io:format("Pos:~w~n", [Possible]),
-    avail_search_s(Other, NewPot, NewPos, Empty).
 
 %From klarnas reversi.erl
 count_ones(I) ->

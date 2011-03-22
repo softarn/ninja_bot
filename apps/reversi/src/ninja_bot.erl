@@ -24,9 +24,11 @@ do_move(Sock, Name, Passwd, Who, Game, Cookie) ->
     reversi:draw_board(Game),
     {Time, {X,Y,_,_}} = timer:tc(ninja_move, minmax, [Game,Who,3]), 
     io:format("Time ~w~n", [Time]),
+    io:format("move ~w~w~n", [X,Y]),
     Ready = mk_move(Cookie, Who, X, Y),
     Reply = send_cmd(Sock, Ready),
-    %io:format("~s~n", [binary_to_list(Reply)]),
+    io:format("~s~n", [binary_to_list(Reply)]),
+    reversi:draw_board(Game),
     case parse_data(Reply) of
         {ok, {your_move, NewGame}} ->
             do_move(Sock, Name, Passwd, Who, NewGame, Cookie);
@@ -71,7 +73,7 @@ ready(Sock, Name, Passwd) ->
 
 wait_for_chal(Sock, Name, Passwd) ->
     {value, {_,_,Reply}} = wait_long_reply(Sock),
-    %io:format("~s~n", [binary_to_list(Reply)]),
+    io:format("~s~n", [binary_to_list(Reply)]),
     case parse_data(Reply) of
         {ok, {lets_play, Who, Game, Cookie}} ->
             start_game(Sock, Name, Passwd, Who, Game, Cookie);
@@ -93,6 +95,7 @@ start_game(Sock, Name, Passwd, Who, Game, Cookie) ->
 
 do_wait(Sock, Name, Passwd, Who, _Game, Cookie) ->
     {value, {_,_,Reply}} = wait_long_reply(Sock),
+    io:format("~s~n", [binary_to_list(Reply)]),
     case parse_data(Reply) of
         {ok, {your_move, NewGame}} ->
             do_move(Sock, Name, Passwd, Who, NewGame, Cookie);

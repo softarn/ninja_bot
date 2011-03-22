@@ -11,7 +11,7 @@ minmax(Game, Who, Depth) ->
 %Max functions
 max(Game, Who, Depth, Beta) ->
     %Special case when there is only one move available
-    Avail = reversi:check_avail(Game, Who),
+    Avail = board:check_avail(Game, Who),
     case length(Avail) of
 	0 -> {void,void,void,get_win_val(Game,Who)};
 	_ -> loop_max_moves(Game, Avail, Who, Depth, Beta, {void_max,void,void,-1338})
@@ -39,7 +39,7 @@ get_min_response(Game, {_X, _Y, Who}, Depth, Alpha) ->
 
 %Min functions
 min(Game, Who, Depth, Alpha) ->
-    Avail = reversi:check_avail(Game, Who),
+    Avail = board:check_avail(Game, Who),
     loop_min_moves(Game, Avail, Who, Depth, Alpha, {void_min,void,void,1338}).
 
 loop_min_moves(_,[],_,_,_,BestMove) -> BestMove;
@@ -63,7 +63,7 @@ get_max_response(Game, {_X, _Y, Who}, Depth, Beta) ->
 
 %Evaluations functions
 evaluate_board(Game, {X, Y, Who} ) ->
-    Avail = reversi:check_avail(Game, Who),
+    Avail = board:check_avail(Game, Who),
     case length(Avail) of
 	0 -> 
 	    get_win_val(Game, Who);
@@ -80,7 +80,7 @@ get_win_val(Game, Who) ->
     end.
 
 get_avail_val(Game, Who) -> 
-    length(reversi:check_avail(Game, Who)) - length(reversi:check_avail(Game, swap(Who))).
+    length(board:check_avail(Game, Who)) - length(board:check_avail(Game, swap(Who))).
 
 winner(Game) ->
     case reversi:winner(Game) of

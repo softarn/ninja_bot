@@ -33,30 +33,35 @@ move_parse(Moves, Count, List) ->
 
 
 avail_init(Player, Other) ->
-    io:format("players:~w~n", [(Player bor Other)]),
-    Empty = (pow(2,64) - 1) bxor (Player bor Other),
-    io:format("Empty:~w~n", [Empty]),
-    EmptyR = Empty bxor 9259542123273814144,	    %Delete the right side of empty so bits dont wrap
-    EmptyL = Empty bxor 72340172838076673,	    %Delete the left side of empty so bits dont wrap
-    avail_start(Player, Other, Empty, fun(X) -> X bsr 8 end) bor    %North search
-    avail_start(Player, Other, EmptyL, fun(X) -> X bsr 7 end) bor   %Norteast search
-    avail_start(Player, Other, EmptyL, fun(X) -> X bsl 1 end) bor   %East search
-    avail_start(Player, Other, EmptyL, fun(X) -> X bsl 9 end) bor   %Southeast search
-    avail_start(Player, Other, Empty, fun(X) -> X bsl 8 end) bor    %South search
-    avail_start(Player, Other, EmptyR, fun(X) -> X bsl 7 end) bor   %Southwest search
-    avail_start(Player, Other, EmptyR, fun(X) -> X bsr 1 end) bor   %West search
-    avail_start(Player, Other, EmptyR, fun(X) -> X bsr 9 end).	    %Northwest search
+    Full = pow(2,64) - 1,
+    Empty = Full bxor (Player bor Other),
+    MaskT = Full bxor 255,			%Masks for deleting wrapping bits
+    MaskB = Full bxor 18374686479671623680,
+    MaskR = Full bxor 9259542123273814144,
+    MaskL = Full bxor 72340172838076673,    
+    MaskRT = MaskR band MaskT,
+    MaskLT = MaskL band MaskT,
+    MaskLB = MaskL band MaskB,
+    MaskRB = MaskR band MaskB,
+    avail_start(Player, Other, Empty, MaskB, fun(X) -> X bsr 8 end) bor	    %North search
+    avail_start(Player, Other, Empty, MaskLB, fun(X) -> X bsr 7 end) bor    %Norteast search
+    avail_start(Player, Other, Empty, MaskL, fun(X) -> X bsl 1 end) bor	    %East search
+    avail_start(Player, Other, Empty, MaskLT, fun(X) -> X bsl 9 end) bor    %Southeast search
+    avail_start(Player, Other, Empty, MaskT, fun(X) -> X bsl 8 end) bor	    %South search
+    avail_start(Player, Other, Empty, MaskRT, fun(X) -> X bsl 7 end) bor    %Southwest search
+    avail_start(Player, Other, Empty, MaskR, fun(X) -> X bsr 1 end) bor	    %West search
+    avail_start(Player, Other, Empty, MaskRB, fun(X) -> X bsr 9 end).	    %Northwest search
 
-avail_start(Player, Other, Empty, Bitfun) ->
+avail_start(Player, Other, Empty, Mask, Bitfun ) ->
     NewPla = Bitfun(Player),
-    Potential = (NewPla band Other),
-    avail_search(Other, Potential, 0, Empty, Bitfun).
+    Potential = (NewPla band Other) band Mask,
+    avail_search(Other, Potential, 0, Empty, Mask, Bitfun).
 
-avail_search(_, 0, Possible, _, _) -> Possible;
-avail_search(Other, Potential, Possible, Empty, Bitfun) ->
-    NewPot = Bitfun(Potential) band Other,
-    NewPos = Possible bor (Bitfun(Potential) band Empty),
-    avail_search(Other, NewPot, NewPos, Empty, Bitfun).
+avail_search(_, 0, Possible, _, _,_) -> Possible;
+avail_search(Other, Potential, Possible, Empty, Mask, Bitfun) ->
+    NewPot = (Bitfun(Potential) band Other) band Mask,
+    NewPos = Possible bor ((Bitfun(Potential) band Mask) band Empty),
+    avail_search(Other, NewPot, NewPos, Empty, Mask, Bitfun).
 
 %From klarnas reversi.erl
 count_ones(I) ->

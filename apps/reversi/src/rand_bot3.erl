@@ -6,7 +6,7 @@
         ]).
 
 start() ->
-    start(localhost,7676,"Rand","syTjlwEGA6").
+    start(localhost,7676,"Rand","NvG7VwmXjS").
 start(Host, Port, Name, Passwd) ->
     case gen_tcp:connect(Host, Port, [binary,{packet, 0}]) of
 	{ok, Sock} ->
@@ -75,8 +75,8 @@ do_wait(Sock, Name, Passwd, Who, _Game, Cookie) ->
 
 do_move(Sock, Name, Passwd, Who, Game, Cookie) ->
     reversi:draw_board(Game),
-    M = reversi:check_avail(Game, Who),
-    {X, Y, _} = reversi:rand_pick(M),
+    M = board:check_avail(Game, Who),
+    {X, Y} = reversi:rand_pick(M),
     Ready = mk_move(Cookie, Who, X, Y),
     Reply = send_cmd(Sock, Ready),
     %io:format("~s~n", [binary_to_list(Reply)]),

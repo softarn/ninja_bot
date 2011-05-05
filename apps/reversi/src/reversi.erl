@@ -153,8 +153,6 @@ count_ones(I, Ones) ->
         0 -> count_ones(I bsr 1, Ones)
     end.
 
-check_avail(Game, Who) ->
-    board:check_avail(Game, Who);
 check_avail(#game{} = G, Who) ->
     [{X, Y, GN} || X <- [0,1,2,3,4,5,6,7],
                    Y <- [0,1,2,3,4,5,6,7],

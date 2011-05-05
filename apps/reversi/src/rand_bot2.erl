@@ -76,7 +76,7 @@ do_wait(Sock, Name, Passwd, Who, _Game, Cookie) ->
 do_move(Sock, Name, Passwd, Who, Game, Cookie) ->
     reversi:draw_board(Game),
     M = reversi:check_avail(Game, Who),
-    {X, Y, _} = reversi:rand_pick(M),
+    {X, Y} = reversi:rand_pick(M),
     Ready = mk_move(Cookie, Who, X, Y),
     Reply = send_cmd(Sock, Ready),
     io:format("~s~n", [binary_to_list(Reply)]),
